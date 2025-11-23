@@ -61,7 +61,7 @@ with st.spinner("Loading data..."):
     df = load_data()
 
 if df.empty:
-    st.title("Sales Data Analytics — Live Demo")
+    st.title("Warehouse Sales Analytics Dashboard")
     st.error("No data found. Place `Sales_data(EDA Exported).csv` or `Regional Sales Dataset.xlsx` in the repository root.")
     st.stop()
 
