@@ -30,3 +30,53 @@ jobs:
           context: .
           push: true
           tags: ghcr.io/${{ github.repository }}:latest
+
+  smoke-test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull image
+        run: |
+          docker pull ghcr.io/${{ github.repository }}:latest
+
+      - name: Run container
+        run: |
+          docker run -d --name sales_app -p 8501:8501 ghcr.io/${{ github.repository }}:latest || (docker logs sales_app || true; exit 1)
+
+      - name: Wait for app and smoke-test HTTP
+        run: |
+          set -e
+          echo "Waiting for Streamlit to become available on http://localhost:8501 ..."
+          ATTEMPTS=30
+          SLEEP=2
+          for i in $(seq 1 $ATTEMPTS); do
+            if curl -fsS http://localhost:8501/ > /dev/null 2>&1; then
+              echo "App responded on attempt $i"
+              break
+            fi
+            echo "Attempt $i/$ATTEMPTS - not ready; sleeping $SLEEP seconds"
+            sleep $SLEEP
+            if [ $i -eq $ATTEMPTS ]; then
+              echo "App did not respond after $ATTEMPTS attempts"
+              docker logs sales_app || true
+              docker stop sales_app || true
+              docker rm sales_app || true
+              exit 1
+            fi
+          done
+
+      - name: Stop and remove container
+        if: always()
+        run: |
+          docker stop sales_app || true
+          docker rm sales_app || true
