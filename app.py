@@ -34,7 +34,7 @@ df = load_data()
 if df.empty:
     st.stop()
 
-st.title("Sales Data Analytics — Live Demo")
+st.title("Warehouse Sales Data Analytics Dashboard")
 
 with st.sidebar:
     st.header("Filters")
