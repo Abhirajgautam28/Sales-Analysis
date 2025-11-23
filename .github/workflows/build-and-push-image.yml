@@ -7,6 +7,8 @@ permissions:
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build:
@@ -37,12 +39,23 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Compute lowercase image name
-        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}:latest" >> $GITHUB_ENV
-
-      - name: Build and push (buildx)
+      - name: Compute image name
         run: |
-          docker buildx build --platform linux/amd64 --tag "$IMAGE" --push .
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}:latest" >> $GITHUB_ENV
+          else
+            # For PRs build a local image tag we can run in the runner
+            echo "IMAGE=sales-analysis:pr-${GITHUB_RUN_ID}" >> $GITHUB_ENV
+          fi
+
+      - name: Build (push on main, load on PR)
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            docker buildx build --platform linux/amd64 --tag "$IMAGE" --push .
+          else
+            # --load loads image into the runner's docker daemon so we can run it
+            docker buildx build --platform linux/amd64 --tag "$IMAGE" --load .
+          fi
 
   smoke-test:
     needs: build
@@ -69,9 +82,13 @@ jobs:
       - name: Compute lowercase image name
         run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}:latest" >> $GITHUB_ENV
 
-      - name: Pull image
+      - name: Pull image (push runs only)
         run: |
-          docker pull "$IMAGE"
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            docker pull "$IMAGE"
+          else
+            echo "Skipping docker pull for PR build (image loaded locally)."
+          fi
 
       - name: Run container
         run: |
