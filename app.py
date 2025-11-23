@@ -10,7 +10,6 @@ st.set_page_config(page_title="Sales Analysis — Live Demo", layout="wide")
 
 @st.cache_data
 def load_data():
-    # Prefer CSV exported by the notebook; fall back to Excel if CSV missing
     csv_path = "Sales_data(EDA Exported).csv"
     excel_path = "Regional Sales Dataset.xlsx"
     try:
@@ -26,9 +25,7 @@ def load_data():
         except Exception:
             st.error("Could not find data file. Ensure `Sales_data(EDA Exported).csv` or `Regional Sales Dataset.xlsx` is in the repo.")
             return pd.DataFrame()
-    # Normalize column names (lowercase, strip)
     df.columns = df.columns.str.strip().str.lower()
-    # try to parse date
     if 'order_date' in df.columns:
         df['order_date'] = pd.to_datetime(df['order_date'], errors='coerce')
     return df
@@ -60,7 +57,6 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("Built with Python, Streamlit, pandas, Plotly, Seaborn, MySQL (for pipelines), and Power BI for dashboards.")
 
-# Apply filters
 df_f = df.copy()
 if date_range and len(date_range) == 2 and 'order_date' in df_f.columns:
     start, end = date_range
@@ -75,7 +71,6 @@ if channels:
     if 'channel' in df_f.columns:
         df_f = df_f[df_f['channel'].isin(channels)]
 
-# Key metrics
 col1, col2, col3, col4 = st.columns(4)
 total_revenue = df_f['revenue'].sum() if 'revenue' in df_f.columns else 0
 total_profit = df_f['profit'].sum() if 'profit' in df_f.columns else 0
@@ -89,7 +84,6 @@ col4.metric("# Orders", f"{orders:,}")
 
 st.markdown("---")
 
-# Charts: Monthly trend
 st.subheader("Monthly Revenue Trend")
 if 'order_date' in df_f.columns and 'revenue' in df_f.columns:
     df_f['order_month'] = df_f['order_date'].dt.to_period('M')
@@ -101,7 +95,6 @@ if 'order_date' in df_f.columns and 'revenue' in df_f.columns:
 else:
     st.info("Order date or revenue column not available for monthly trend.")
 
-# Top products by revenue
 st.subheader("Top Products by Revenue")
 if 'product_name' in df_f.columns and 'revenue' in df_f.columns:
     top_prod = df_f.groupby('product_name')['revenue'].sum().nlargest(10).reset_index()
@@ -109,7 +102,6 @@ if 'product_name' in df_f.columns and 'revenue' in df_f.columns:
     fig2.update_layout(yaxis={'categoryorder':'total ascending'})
     st.plotly_chart(fig2, use_container_width=True)
 
-# Map / Choropleth
 st.subheader('Sales by State (Choropleth)')
 if 'state' in df_f.columns and 'revenue' in df_f.columns:
     state_sales = df_f.groupby('state')['revenue'].sum().reset_index()
@@ -126,7 +118,6 @@ else:
 
 st.markdown('---')
 
-# Data table with download
 st.subheader('Filtered Data Sample')
 st.dataframe(df_f.head(100))
 
