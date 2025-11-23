@@ -5,7 +5,7 @@ we can address it responsibly.
 
 Preferred reporting process
 1. Open a private issue and add `security` to the title, or
-2. Contact the maintainers directly at `abhirajgautam28@users.noreply.github.com`.
+2. Contact the maintainers directly at `abhirajgautam28@gmail.com`.
 
 Please include:
 - A clear description of the vulnerability
