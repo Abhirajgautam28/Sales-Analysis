@@ -11,6 +11,6 @@ Key points
 
 Reporting
 If you experience or witness unacceptable behavior, please report it to the
-project maintainers at `abhirajgautam28@users.noreply.github.com`.
+project maintainers at `abhirajgautam28@gmail.com`.
 
 For the full text of the Contributor Covenant, see: https://www.contributor-covenant.org
